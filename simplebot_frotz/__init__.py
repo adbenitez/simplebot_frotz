@@ -1,6 +1,7 @@
 """hooks, filters and commands definitions."""
 
 import os
+from typing import Optional
 from urllib.parse import quote
 
 import simplebot
@@ -74,7 +75,7 @@ def filter_messages(bot: DeltaBot, message: Message) -> None:
 def list_cmd(replies: Replies) -> None:
     """Get the list of available games to play."""
     text = ""
-    for i, name in enumerate(os.listdir(games_dir), 1):
+    for i, name in enumerate(_get_games(), 1):
         name = name.rsplit(".", maxsplit=1)[0]
         text += f"▶️ /play_{i} {name}\n"
     if not text:
@@ -91,7 +92,7 @@ def play(bot: DeltaBot, payload: str, message: Message, replies: Replies) -> Non
     /play_1
     """
     numb = int(payload) - 1 if payload.isdigit() else -1
-    games = os.listdir(games_dir)
+    games = _get_games()
     if numb >= len(games) or numb < 0:
         replies.add(text="❌ Invalid game number.")
         return
@@ -105,6 +106,10 @@ def play(bot: DeltaBot, payload: str, message: Message, replies: Replies) -> Non
             frotz_game = _get_game(name, addr, bot)
             frotz_game.save()
             frotz_game.stop()
+            image = _get_artwork(name)
+            if image:
+                chat.set_profile_image(image)
+                replies.add(filename=image)
             replies.add(text=frotz_game.intro, chat=chat)
         else:
             text = f"❌ You are playing {name!r} already."
@@ -115,8 +120,25 @@ def _get_folder(bot: DeltaBot) -> str:
     return os.path.join(os.path.dirname(bot.account.db_path), __name__)
 
 
+def _get_games() -> list:
+    return [
+        name for name in os.listdir(games_dir) if not name.endswith((".jpg", ".png"))
+    ]
+
+
+def _get_artwork(name: str) -> Optional[str]:
+    basename = f"{games_dir}/{name}"
+    filename = f"{basename}.jpg"
+    if os.path.exists(filename):
+        return filename
+    filename = f"{basename}.png"
+    if os.path.exists(filename):
+        return filename
+    return None
+
+
 def _get_game(name: str, player: str, bot: DeltaBot) -> FrotzGame:
-    for filename in os.listdir(games_dir):
+    for filename in _get_games():
         if filename.startswith(name + "."):
             story_file = f"{games_dir}/{filename}"
             break

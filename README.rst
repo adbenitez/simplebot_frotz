@@ -28,7 +28,7 @@ To install run::
 
   pip install simplebot-frotz
 
-After installation you should put games in ``~/.simplebot/frotz-games/`` folder, name the games appropriately, the file names will be shown to the users in the game list.
+After installation you should put games in ``~/.simplebot/frotz-games/`` folder, name the games appropriately, the file names will be shown to the users in the game list. If a ``.jpg`` or ``.png`` file with the same name of a game is found it will be used for the game group's profile image.
 
 
 .. _SimpleBot: https://github.com/simplebot-org/simplebot
