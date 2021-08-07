@@ -123,7 +123,7 @@ def _get_folder(bot: DeltaBot) -> str:
 def _get_games() -> list:
     return [
         name
-        for name in os.listdir(games_dir)
+        for name in sorted(os.listdir(games_dir))
         if not name.endswith((".jpg", ".jpeg", ".png"))
     ]
 
