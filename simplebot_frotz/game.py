@@ -61,6 +61,9 @@ class FrotzGame:  # noqa
                             break
                     break
                 output += chunk
+            elif output.endswith(b"\n\n"):
+                self.frotz.stdin.write(b"\n")  # type: ignore
+                self.frotz.stdin.flush()  # type: ignore
             else:
                 return ""
         text = output.decode(errors="replace")
