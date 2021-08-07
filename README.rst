@@ -19,7 +19,7 @@
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
 
-Z-Machine (InfoCom) interpreter for `SimpleBot`_.
+Z-Machine (Infocom) interpreter for `SimpleBot`_.
 
 Install
 -------
@@ -28,7 +28,7 @@ To install run::
 
   pip install simplebot-frotz
 
-After installation you should put games in ``~/.simplebot/frotz-games``, name the games appropriately, the file names will be shown to the users in the game list.
+After installation you should put games in ``~/.simplebot/frotz-games/`` folder, name the games appropriately, the file names will be shown to the users in the game list.
 
 
 .. _SimpleBot: https://github.com/simplebot-org/simplebot
