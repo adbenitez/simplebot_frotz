@@ -69,6 +69,8 @@ def filter_messages(bot: DeltaBot, message: Message) -> None:
         frotz_game = _get_game(name, message.get_sender_contact().addr, bot)
         response = frotz_game.do(text)
         game_over = frotz_game.ended()
+        if not game_over:
+            frotz_game.save()
         frotz_game.stop()
     if game_over:
         message.chat.send_text(f"{response}\n\n**GAME OVER**")
