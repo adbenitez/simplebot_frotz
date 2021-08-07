@@ -128,12 +128,10 @@ def _get_games() -> list:
 
 def _get_artwork(name: str) -> Optional[str]:
     basename = f"{games_dir}/{name}"
-    filename = f"{basename}.jpg"
-    if os.path.exists(filename):
-        return filename
-    filename = f"{basename}.png"
-    if os.path.exists(filename):
-        return filename
+    for ext in ("jpg", "jpeg", "png"):
+        filename = f"{basename}.{ext}"
+        if os.path.exists(filename):
+            return filename
     return None
 
 
