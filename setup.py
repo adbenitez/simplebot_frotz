@@ -47,7 +47,10 @@ def load_requirements(path: str) -> list:
 
 if __name__ == "__main__":
     MODULE_NAME = "simplebot_frotz"
-    DESC = "Z-machine interpreter plugin for SimpleBot, play interactive fiction games in Delta Chat!"
+    DESC = (
+        "Z-machine interpreter plugin for SimpleBot,"
+        " play interactive fiction games in Delta Chat!"
+    )
 
     with open("README.rst") as fh:
         long_description = fh.read()
