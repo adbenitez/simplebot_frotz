@@ -78,7 +78,7 @@ def list_cmd(replies: Replies) -> None:
         name = name.rsplit(".", maxsplit=1)[0]
         text += f"▶️ /play_{i} {name}\n"
     if not text:
-        text = "❌ No game available, put games files in: {games_dir}"
+        text = f"❌ No game available, put games files in: {games_dir}"
     replies.add(text=text)
 
 
