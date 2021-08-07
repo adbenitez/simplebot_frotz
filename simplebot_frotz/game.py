@@ -68,15 +68,12 @@ class FrotzGame:  # noqa
                         output = output[: index + int(include_prompt)]
                         break
                 break
-            elif output.endswith(b"\n\n"):
+            elif output.endswith(b"\n"):
                 self.logger.debug("Received MORE-like input")
                 self.frotz.stdin.write(b"\n")  # type: ignore
                 self.frotz.stdin.flush()  # type: ignore
-            elif output.endswith(b"]\n"):
-                self.logger.debug("Received MORE-like input")
-                output = output[: output.rfind(b"[")]
-                self.frotz.stdin.write(b"\n")  # type: ignore
-                self.frotz.stdin.flush()  # type: ignore
+                if output.endswith(b"]\n"):
+                    output = output[: output.rfind(b"[")]
             else:
                 self.logger.debug(f"Unexpected end of file, after reading: {output!r}")
                 return ""
