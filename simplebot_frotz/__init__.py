@@ -84,7 +84,12 @@ def play(bot: DeltaBot, payload: str, message: Message, replies: Replies) -> Non
     For example, to play the first game on the list:
     /play_1
     """
-    name = os.listdir(games_dir)[int(payload)].rsplit(".", maxsplit=1)[0]
+    numb = int(payload) - 1 if payload.isdigit() else -1
+    games = os.listdir(games_dir)
+    if numb >= len(games) or numb < 0:
+        replies.add(text="❌ Invalid game number.")
+        return
+    name = games[numb].rsplit(".", maxsplit=1)[0]
     addr = message.get_sender_contact().addr
     with session_scope() as session:
         game = session.query(Game).filter_by(name=name, player=addr).first()
