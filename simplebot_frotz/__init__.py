@@ -153,5 +153,8 @@ def _get_game(name: str, player: str, bot: DeltaBot) -> FrotzGame:
             break
     else:
         raise ValueError(f"Game not found: {name!r}")
-    save_file = f"{_get_folder(bot)}/{name}/{quote(player)}.qzl"
+    saves_dir = f"{_get_folder(bot)}/{name}"
+    if not os.path.exists(saves_dir):
+        os.mkdir(saves_dir)
+    save_file = f"{saves_dir}/{quote(player)}.qzl"
     return FrotzGame(story_file, save_file)
