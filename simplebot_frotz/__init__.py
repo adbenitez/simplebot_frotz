@@ -52,7 +52,7 @@ def filter_messages(bot: DeltaBot, message: Message) -> None:
     What instructions/verbs are supported depends of the game and game
     language, usually if you send "help" you will get the game's help.
     If you are new to Interactive Fiction read:
-    http://www.ifwiki.org/index.php/Starters
+    https://www.ifwiki.org/index.php/Starters
     https://en.wikipedia.org/wiki/Interactive_fiction
     """
     with session_scope() as session:
