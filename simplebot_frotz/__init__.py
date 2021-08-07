@@ -46,7 +46,7 @@ def deltabot_start(bot: DeltaBot) -> None:
 
 
 @simplebot.filter
-def filter_messages(bot: DeltaBot, message: Message) -> None:
+def filter_messages(bot: DeltaBot, message: Message, replies: Replies) -> None:
     """Once you start a game, you must send me text messages with instructions in the game group.
 
     What instructions/verbs are supported depends of the game and game
@@ -77,7 +77,7 @@ def filter_messages(bot: DeltaBot, message: Message) -> None:
         # leaving the group causes the game and save file to be deleted
         message.chat.remove_contact(bot.self_contact)
     else:
-        message.chat.send_text(response or "❌ Invalid command.")
+        replies.add(text=response or "❌ Invalid command.")
 
 
 @simplebot.command(name="/list")
