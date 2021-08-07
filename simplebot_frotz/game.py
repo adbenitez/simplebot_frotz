@@ -57,14 +57,14 @@ class FrotzGame:  # noqa
                 chunk = self.frotz.stdout.read(len(self.frotz.stdout.peek()))  # type: ignore
                 if not chunk:
                     return ""
-                if any(map(lambda p: p in chunk, prompts)):
-                    for prompt in prompts:
-                        index = chunk.find(prompt)
-                        if index != -1:
-                            output += chunk[: index + int(include_prompt)]
-                            break
-                    break
                 output += chunk
+            elif any(map(lambda p: p in output, prompts)):
+                for prompt in prompts:
+                    index = output.rfind(prompt)
+                    if index != -1:
+                        output = output[: index + int(include_prompt)]
+                        break
+                break
             elif output.endswith(b"\n\n"):
                 self.frotz.stdin.write(b"\n")  # type: ignore
                 self.frotz.stdin.flush()  # type: ignore
