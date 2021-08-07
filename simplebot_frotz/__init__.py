@@ -109,7 +109,7 @@ def play(bot: DeltaBot, payload: str, message: Message, replies: Replies) -> Non
             image = _get_artwork(name)
             if image:
                 chat.set_profile_image(image)
-                replies.add(filename=image)
+                replies.add(filename=image, chat=chat)
             replies.add(text=frotz_game.intro, chat=chat)
         else:
             text = f"❌ You are playing {name!r} already."
