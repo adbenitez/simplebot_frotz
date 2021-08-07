@@ -47,7 +47,14 @@ def deltabot_start(bot: DeltaBot) -> None:
 
 @simplebot.filter
 def filter_messages(bot: DeltaBot, message: Message) -> None:
-    """In the game groups you can send me instructions"""
+    """Once you start a game, to play you must send me text messages with instructions in the game group.
+
+    What instructions/verbs are supported depends of the game and game
+    language, usually if you send "help" you will get the game's help.
+    If you are new to Interactive Fiction read:
+    http://www.ifwiki.org/index.php/Starters
+    https://en.wikipedia.org/wiki/Interactive_fiction
+    """
     with session_scope() as session:
         game = session.query(Game).filter_by(chat_id=message.chat.id).first()
         if game is None:
