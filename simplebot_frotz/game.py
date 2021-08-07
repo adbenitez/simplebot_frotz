@@ -55,6 +55,8 @@ class FrotzGame:  # noqa
             rlist, _, _ = select.select([self.frotz.stdout], [], [], 1)
             if self.frotz.stdout in rlist:
                 chunk = self.frotz.stdout.read(len(self.frotz.stdout.peek()))  # type: ignore
+                if not chunk:
+                    return ""
                 if any(map(lambda p: p in chunk, prompts)):
                     for prompt in prompts:
                         index = chunk.find(prompt)
