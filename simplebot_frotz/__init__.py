@@ -53,14 +53,20 @@ def filter_messages(bot: DeltaBot, message: Message) -> None:
             return
         name = game.name
 
-    frotz_game = _get_game(name, message.get_sender_contact().addr, bot)
-    response = frotz_game.do(message.text)
-    if frotz_game.ended():
+    text = " ".join(message.text.split())
+    if text.startswith("\\") or text in ("save", "load", "restore", "quit"):
+        response = ""
+        game_over = False
+    else:
+        frotz_game = _get_game(name, message.get_sender_contact().addr, bot)
+        response = frotz_game.do(text)
+        game_over = frotz_game.ended()
+        frotz_game.stop()
+    if game_over:
         message.chat.send_text(f"{response}\n\n**GAME OVER**")
         # leaving the group causes the game and save file to be deleted
         message.chat.remove_contact(bot.self_contact)
     else:
-        frotz_game.stop()
         message.chat.send_text(response or "❌ Invalid command.")
 
 
