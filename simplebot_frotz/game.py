@@ -32,9 +32,11 @@ class FrotzGame:  # noqa
         sleep(0.1)  # Allow to load
 
         lines = self._read(reformat=False).split("\n")[2:]
-        if lines[0].lower().strip() == "found zcode chunk in blorb file.":
+        if lines and lines[0].lower().strip() == "found zcode chunk in blorb file.":
             lines.pop(0)
         self.intro = _reformat("\n".join(lines))
+        if not self.intro:
+            raise ValueError("Invalid Game")
 
         # Load default savegame
         if os.path.exists(self.save_file):
@@ -62,6 +64,10 @@ class FrotzGame:  # noqa
                     break
                 output += chunk
             elif output.endswith(b"\n\n"):
+                self.frotz.stdin.write(b"\n")  # type: ignore
+                self.frotz.stdin.flush()  # type: ignore
+            elif output.endswith(b"]\n"):
+                output = output[: output.rfind(b"[")]
                 self.frotz.stdin.write(b"\n")  # type: ignore
                 self.frotz.stdin.flush()  # type: ignore
             else:
