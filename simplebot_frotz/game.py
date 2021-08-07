@@ -3,6 +3,7 @@
 import os
 import select
 import subprocess
+from logging import Logger
 from time import sleep
 
 
@@ -13,10 +14,12 @@ class FrotzGame:  # noqa
         self,
         story_file: str,
         save_file: str,
+        logger: Logger,
         interpreter: str = os.path.expanduser("~/.simplebot") + "/dfrotz",
         prompt_symbol=">",
         reformat_spacing=True,
     ) -> None:
+        self.logger = logger
         self.story_file = story_file
         self.save_file = save_file
         self.prompt_symbol = prompt_symbol
@@ -38,7 +41,7 @@ class FrotzGame:  # noqa
         if not self.intro:
             raise ValueError(f"Invalid Game: {self.story_file!r}")
 
-        # Load default savegame
+        # Load game save
         if os.path.exists(self.save_file):
             self.load(self.save_file)
 
@@ -66,13 +69,16 @@ class FrotzGame:  # noqa
                         break
                 break
             elif output.endswith(b"\n\n"):
+                self.logger.debug("Received MORE-like input")
                 self.frotz.stdin.write(b"\n")  # type: ignore
                 self.frotz.stdin.flush()  # type: ignore
             elif output.endswith(b"]\n"):
+                self.logger.debug("Received MORE-like input")
                 output = output[: output.rfind(b"[")]
                 self.frotz.stdin.write(b"\n")  # type: ignore
                 self.frotz.stdin.flush()  # type: ignore
             else:
+                self.logger.debug(f"Unexpected end of file, after reading: {output!r}")
                 return ""
         text = output.decode(errors="replace")
         return _reformat(text) if reformat else text
@@ -87,12 +93,14 @@ class FrotzGame:  # noqa
         assert response
         if response.endswith("?"):  # Indicates an overwrite query
             assert self.do("y")  # reply yes
+        self.logger.debug("Game saved.")
 
     def load(self, filename=None) -> None:
         """Restore saved game."""
         filename = filename or self.save_file
         assert self.do("restore", (":",))
         assert self.do(filename)
+        self.logger.debug("Game restored.")
 
     def do(self, action: str, prompts: tuple = None) -> str:  # noqa
         """Write a command to the interpreter.

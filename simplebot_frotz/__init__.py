@@ -157,4 +157,4 @@ def _get_game(name: str, player: str, bot: DeltaBot) -> FrotzGame:
     if not os.path.exists(saves_dir):
         os.mkdir(saves_dir)
     save_file = f"{saves_dir}/{quote(player)}.qzl"
-    return FrotzGame(story_file, save_file)
+    return FrotzGame(story_file, save_file, logger=bot.logger)
