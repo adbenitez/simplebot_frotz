@@ -86,7 +86,6 @@ class FrotzGame:  # noqa
         lines = [line.strip() for line in text.split("\n")]
         for line, next_line in zip(lines, lines + [""]):
             if line:
-                print(f"{len(line)} | {line!r}")
                 formated += line
                 if next_line and not line.endswith("."):
                     size = len(line + next_line.split()[0]) + 1
