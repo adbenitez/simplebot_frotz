@@ -29,7 +29,7 @@ class FrotzGame:  # noqa
 
     def _init_frotz(self, interpreter: str) -> None:
         self.frotz = subprocess.Popen(  # noqa
-            (interpreter, "-m", f"-w{self.screen_width}", self.story_file),
+            (interpreter, "-m", "-Z0", f"-w{self.screen_width}", self.story_file),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
