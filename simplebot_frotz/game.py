@@ -94,7 +94,7 @@ class FrotzGame:  # noqa
                         formated += " "
                         continue
                 formated += "\n"
-        return formated
+        return formated.strip()
 
     def _check(self, response: str) -> None:
         if not response:
