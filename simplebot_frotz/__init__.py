@@ -26,9 +26,10 @@ def deltabot_member_removed(bot: DeltaBot, contact: Contact, chat: Chat) -> None
         game = session.query(Game).filter_by(chat_id=chat.id).first()
         if game:
             if contact.addr in (game.player, bot.self_contact.addr):
-                frotz_game = _get_game(game.name, game.player, bot)
-                if os.path.exists(frotz_game.save_file):
-                    os.remove(frotz_game.save_file)
+                try:
+                    os.remove(_get_save_file(_get_folder(bot), game.name, game.player))
+                except FileNotFoundError:
+                    pass
                 session.delete(game)
                 try:
                     chat.remove_contact(bot.self_contact)
@@ -146,6 +147,13 @@ def _get_artwork(name: str) -> Optional[str]:
     return None
 
 
+def _get_save_file(plugin_folder, name: str, player: str) -> str:
+    saves_dir = f"{plugin_folder}/{name}"
+    if not os.path.exists(saves_dir):
+        os.makedirs(saves_dir)
+    return f"{saves_dir}/{quote(player)}.qzl"
+
+
 def _get_game(name: str, player: str, bot: DeltaBot) -> FrotzGame:
     for filename in _get_games():
         if filename.startswith(name + "."):
@@ -153,8 +161,5 @@ def _get_game(name: str, player: str, bot: DeltaBot) -> FrotzGame:
             break
     else:
         raise ValueError(f"Game not found: {name!r}")
-    saves_dir = f"{_get_folder(bot)}/{name}"
-    if not os.path.exists(saves_dir):
-        os.mkdir(saves_dir)
-    save_file = f"{saves_dir}/{quote(player)}.qzl"
+    save_file = _get_save_file(_get_folder(bot), name, player)
     return FrotzGame(story_file, save_file, logger=bot.logger)
