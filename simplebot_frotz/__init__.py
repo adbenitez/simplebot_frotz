@@ -150,7 +150,7 @@ def _get_artwork(name: str) -> Optional[str]:
     return None
 
 
-def _get_save_file(plugin_folder, name: str, player: str) -> str:
+def _get_save_file(plugin_folder: str, name: str, player: str) -> str:
     saves_dir = f"{plugin_folder}/{name}"
     if not os.path.exists(saves_dir):
         os.makedirs(saves_dir)
