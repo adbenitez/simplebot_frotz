@@ -85,7 +85,7 @@ class FrotzGame:  # noqa
     def _reformat(self, text: str) -> str:
         formated = ""
         lines = [line.strip() for line in text.split("\n")]
-        for line, next_line in zip(lines, lines + [""]):
+        for line, next_line in zip(lines, lines[1:] + [""]):
             if line:
                 formated += line
                 if next_line and not line.endswith("."):
