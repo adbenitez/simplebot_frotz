@@ -110,7 +110,7 @@ class FrotzGame:  # noqa
     def load(self, filename=None) -> None:
         """Restore saved game."""
         filename = filename or self.save_file
-        assert self.do("restore", (":",))
+        assert self.do("load", (":",))
         assert self.do(filename)
         self.logger.debug("Game restored.")
 
