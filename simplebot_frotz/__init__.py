@@ -67,12 +67,16 @@ def filter_messages(bot: DeltaBot, message: Message, replies: Replies) -> None:
         response = ""
         game_over = False
     else:
-        frotz_game = _get_game(name, message.get_sender_contact().addr, bot)
-        response = frotz_game.do(text)
-        game_over = frotz_game.ended()
-        if not game_over and response:
-            frotz_game.save()
-        frotz_game.stop()
+        try:
+            frotz_game = _get_game(name, message.get_sender_contact().addr, bot)
+            response = frotz_game.do(text)
+            game_over = frotz_game.ended()
+            if not game_over and response:
+                frotz_game.save()
+            frotz_game.stop()
+        except ValueError:
+            response = ""
+            game_over = False
     if game_over:
         message.chat.send_text(f"{response}\n\n**GAME OVER**")
         # leaving the group causes the game and save file to be deleted

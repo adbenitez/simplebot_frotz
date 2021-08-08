@@ -40,6 +40,7 @@ class FrotzGame:  # noqa
             lines.pop(0)
         self.intro = self._reformat("\n".join(lines))
         if not self.intro:
+            self.stop()
             raise ValueError(f"Invalid Game: {self.story_file!r}")
 
         # Load game save
@@ -95,23 +96,28 @@ class FrotzGame:  # noqa
                 formated += "\n"
         return formated
 
+    def _check(self, response: str) -> None:
+        if not response:
+            self.stop()
+            raise ValueError("Unexpected result")
+
     def save(self, filename=None) -> None:
         """Save game state."""
         filename = filename or self.save_file
-        assert self.do("save", (":",))
+        self._check(self.do("save", (":",)))
         self.frotz.stdin.write(filename.encode() + b"\n")  # type: ignore
         self.frotz.stdin.flush()  # type: ignore
         response = self._read(("?", self.prompt_symbol), include_prompt=True)
-        assert response
+        self._check(response)
         if response.endswith("?"):  # Indicates an overwrite query
-            assert self.do("y")  # reply yes
+            self._check(self.do("y"))  # reply yes
         self.logger.debug("Game saved.")
 
     def load(self, filename=None) -> None:
         """Restore saved game."""
         filename = filename or self.save_file
-        assert self.do("load", (":",))
-        assert self.do(filename)
+        self._check(self.do("load", (":",)))
+        self._check(self.do(filename))
         self.logger.debug("Game restored.")
 
     def do(self, action: str, prompts: tuple = None) -> str:  # noqa
