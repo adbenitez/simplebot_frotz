@@ -19,6 +19,7 @@ class FrotzGame:  # noqa
         prompt_symbol=">",
         reformat_spacing=True,
     ) -> None:
+        self.screen_width = 250
         self.logger = logger
         self.story_file = story_file
         self.save_file = save_file
@@ -28,7 +29,7 @@ class FrotzGame:  # noqa
 
     def _init_frotz(self, interpreter: str) -> None:
         self.frotz = subprocess.Popen(  # noqa
-            (interpreter, "-m", self.story_file),
+            (interpreter, "-m", f"-w{self.screen_width}", self.story_file),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
@@ -37,7 +38,7 @@ class FrotzGame:  # noqa
         lines = self._read(reformat=False).split("\n")[2:]
         if lines and lines[0].lower().strip() == "found zcode chunk in blorb file.":
             lines.pop(0)
-        self.intro = _reformat("\n".join(lines))
+        self.intro = self._reformat("\n".join(lines))
         if not self.intro:
             raise ValueError(f"Invalid Game: {self.story_file!r}")
 
@@ -78,7 +79,22 @@ class FrotzGame:  # noqa
                 self.logger.debug(f"Unexpected end of file, after reading: {output!r}")
                 return ""
         text = output.decode(errors="replace")
-        return _reformat(text) if reformat else text
+        return self._reformat(text) if reformat else text
+
+    def _reformat(self, text: str) -> str:
+        formated = ""
+        lines = [line.strip() for line in text.split("\n")]
+        for line, next_line in zip(lines, lines + [""]):
+            if line:
+                print(f"{len(line)} | {line!r}")
+                formated += line
+                if next_line and not line.endswith("."):
+                    size = len(line + next_line.split()[0]) + 1
+                    if size > self.screen_width:
+                        formated += " "
+                        continue
+                formated += "\n"
+        return formated
 
     def save(self, filename=None) -> None:
         """Save game state."""
@@ -116,12 +132,3 @@ class FrotzGame:  # noqa
     def stop(self) -> None:
         """Stop Frotz interpreter"""
         self.frotz.kill()
-
-
-def _reformat(text: str) -> str:
-    lines = []
-    for line in text.split("\n"):
-        line = line.strip()
-        if line:
-            lines.append(line)
-    return " ".join(lines).replace(". ", ".\n")
