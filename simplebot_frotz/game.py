@@ -16,20 +16,26 @@ class FrotzGame:  # noqa
         save_file: str,
         logger: Logger,
         interpreter: str = os.path.expanduser("~/.simplebot") + "/dfrotz",
-        prompt_symbol=">",
         reformat_spacing=True,
     ) -> None:
         self.screen_width = 250
         self.logger = logger
         self.story_file = story_file
         self.save_file = save_file
-        self.prompt_symbol = prompt_symbol
         self.reformat_spacing = reformat_spacing
         self._init_frotz(interpreter)
 
     def _init_frotz(self, interpreter: str) -> None:
         self.frotz = subprocess.Popen(  # noqa
-            (interpreter, "-m", "-Z0", f"-w{self.screen_width}", self.story_file),
+            (
+                interpreter,
+                "-m",
+                "-R",
+                "/dev/null",
+                "-Z0",
+                f"-w{self.screen_width}",
+                self.story_file,
+            ),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
@@ -45,15 +51,10 @@ class FrotzGame:  # noqa
 
         # Load game save
         if os.path.exists(self.save_file):
-            self.load(self.save_file)
+            self.load()
 
-    def _read(
-        self, prompts: tuple = None, include_prompt: bool = False, reformat: bool = None
-    ) -> str:
+    def _read(self, reformat: bool = None) -> str:
         """Read from frotz interpreter process."""
-        prompts = tuple(
-            prompt.encode() for prompt in (prompts or (self.prompt_symbol,))
-        )
         reformat = self.reformat_spacing if reformat is None else reformat
         output = b""
         while True:
@@ -61,24 +62,10 @@ class FrotzGame:  # noqa
             if self.frotz.stdout in rlist:
                 chunk = self.frotz.stdout.read(len(self.frotz.stdout.peek()))  # type: ignore
                 if not chunk:
-                    return ""
+                    break
                 output += chunk
-            elif any(map(lambda p: p in output, prompts)):
-                for prompt in prompts:
-                    index = output.rfind(prompt)
-                    if index != -1:
-                        output = output[: index + int(include_prompt)]
-                        break
-                break
-            elif output.endswith(b"\n"):
-                self.logger.debug("Received MORE-like input")
-                self.frotz.stdin.write(b"\n")  # type: ignore
-                self.frotz.stdin.flush()  # type: ignore
-                if output.endswith(b"]\n"):
-                    output = output[: output.rfind(b"[")]
             else:
-                self.logger.debug(f"Unexpected end of file, after reading: {output!r}")
-                return ""
+                break
         text = output.decode(errors="replace")
         return self._reformat(text) if reformat else text
 
@@ -96,42 +83,31 @@ class FrotzGame:  # noqa
                 formated += "\n"
         return formated.strip()
 
-    def _check(self, response: str) -> None:
-        if not response:
-            self.stop()
-            raise ValueError("Unexpected result")
-
-    def save(self, filename=None) -> None:
-        """Save game state."""
+    def save_action(self, action: str, filename=None) -> None:
+        """Save action/command."""
         filename = filename or self.save_file
-        self._check(self.do("save", (":",)))
-        self.frotz.stdin.write(filename.encode() + b"\n")  # type: ignore
-        self.frotz.stdin.flush()  # type: ignore
-        response = self._read(("?", self.prompt_symbol), include_prompt=True)
-        self._check(response)
-        if response.endswith("?"):  # Indicates an overwrite query
-            self._check(self.do("y"))  # reply yes
-        self.logger.debug("Game saved.")
+        with open(filename, "a") as file:
+            if not action.endswith("\n"):
+                action += "\n"
+            file.write(action)
 
     def load(self, filename=None) -> None:
         """Restore saved game."""
         filename = filename or self.save_file
-        self._check(self.do("restore", (":",)) or self.do("load", (":",)))
-        self._check(self.do(filename))
+        with open(filename) as file:
+            self.do(file.read())
         self.logger.debug("Game restored.")
 
-    def do(self, action: str, prompts: tuple = None) -> str:  # noqa
-        """Write a command to the interpreter.
-
-        If stop is True, the Frotz interpreter will be stop after
-        getting the command response.
-        """
-        self.frotz.stdin.write(action.encode(errors="ignore") + b"\n")  # type: ignore
+    def do(self, action: str) -> str:  # noqa
+        """Write a command to the interpreter."""
+        if not action.endswith("\n"):
+            action += "\n"
+        self.frotz.stdin.write(action.encode(errors="ignore"))  # type: ignore
         self.frotz.stdin.flush()  # type: ignore
-        return self._read(prompts)
+        return self._read()
 
     def ended(self) -> bool:
-        """Return True if game is over, False otherwise."""
+        """Return True if Frotz stopped, False otherwise."""
         return self.frotz.poll() is not None
 
     def stop(self) -> None:

@@ -1,6 +1,13 @@
 Changelog
 =========
 
+`Unreleased`_
+-------------
+
+- game engine was reworked to improve games support.
+- added ``/restart`` command to restart game.
+- added ``/enter`` command to send ``Enter`` key.
+
 `1.0.1`_
 --------
 

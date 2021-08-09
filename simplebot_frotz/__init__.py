@@ -26,10 +26,7 @@ def deltabot_member_removed(bot: DeltaBot, contact: Contact, chat: Chat) -> None
         game = session.query(Game).filter_by(chat_id=chat.id).first()
         if game:
             if contact.addr in (game.player, bot.self_contact.addr):
-                try:
-                    os.remove(_get_save_file(_get_folder(bot), game.name, game.player))
-                except FileNotFoundError:
-                    pass
+                _reset_game(_get_folder(bot), game.name, game.player)
                 session.delete(game)
                 try:
                     chat.remove_contact(bot.self_contact)
@@ -50,8 +47,7 @@ def deltabot_start(bot: DeltaBot) -> None:
 def filter_messages(bot: DeltaBot, message: Message, replies: Replies) -> None:
     """Once you start a game, you must send me text messages with instructions in the game group.
 
-    What instructions/verbs are supported depends of the game and game
-    language, usually if you send "help" you will get the game's help.
+    What instructions/verbs are supported depends of the game and game language, usually if you send "help" you will get the game's help.
     If you are new to Interactive Fiction read:
     https://www.ifwiki.org/index.php/Starters
     https://en.wikipedia.org/wiki/Interactive_fiction
@@ -60,23 +56,19 @@ def filter_messages(bot: DeltaBot, message: Message, replies: Replies) -> None:
         game = session.query(Game).filter_by(chat_id=message.chat.id).first()
         if game is None:
             return
-        name = game.name
+        name, player = game.name, game.player
 
     text = " ".join(message.text.split())
     if text.startswith("\\") or text in ("save", "load", "restore", "quit"):
         response = ""
         game_over = False
     else:
-        try:
-            frotz_game = _get_game(name, message.get_sender_contact().addr, bot)
-            response = frotz_game.do(text)
-            game_over = frotz_game.ended()
-            if not game_over and response:
-                frotz_game.save()
-            frotz_game.stop()
-        except ValueError:
-            response = ""
-            game_over = False
+        frotz_game = _get_game(name, player, bot)
+        response = frotz_game.do(text)
+        game_over = frotz_game.ended()
+        if not game_over and response:
+            frotz_game.save_action(text)
+        frotz_game.stop()
     if game_over:
         message.chat.send_text(f"{response}\n\n**GAME OVER**")
         # leaving the group causes the game and save file to be deleted
@@ -117,16 +109,60 @@ def play(bot: DeltaBot, payload: str, message: Message, replies: Replies) -> Non
         if game is None:
             chat = bot.create_group(name, [addr])
             session.add(Game(name=name, player=addr, chat_id=chat.id))
-            frotz_game = _get_game(name, addr, bot)
-            frotz_game.save()
-            frotz_game.stop()
-            image = _get_artwork(name)
-            if image:
-                chat.set_profile_image(image)
-            replies.add(text=frotz_game.intro, filename=image, chat=chat)
         else:
             text = f"❌ You are playing {name!r} already."
             replies.add(text=text, chat=bot.get_chat(game.chat_id))
+            return
+    frotz_game = _get_game(name, addr, bot)
+    frotz_game.stop()
+    image = _get_artwork(name)
+    if image:
+        chat.set_profile_image(image)
+    replies.add(text=frotz_game.intro, filename=image, chat=chat)
+
+
+@simplebot.command
+def restart(bot: DeltaBot, message: Message, replies: Replies) -> None:
+    """Restart the game in the game group it is sent."""
+    with session_scope() as session:
+        game = session.query(Game).filter_by(chat_id=message.chat.id).first()
+        if game is None:
+            replies.add("❌ This is not a game group.")
+            return
+        name, player = game.name, game.player
+
+    _reset_game(_get_folder(bot), name, player)
+    frotz_game = _get_game(name, player, bot)
+    frotz_game.stop()
+    replies.add(text=frotz_game.intro)
+
+
+@simplebot.command
+def enter(bot: DeltaBot, message: Message, replies: Replies) -> None:
+    """Send "Enter" key in the game group it is sent.
+
+    Some games paginate the text or ask you to press enter to continue, use this command to send "Enter" key to the game.
+    """
+    with session_scope() as session:
+        game = session.query(Game).filter_by(chat_id=message.chat.id).first()
+        if game is None:
+            replies.add("❌ This is not a game group.")
+            return
+        name, player = game.name, game.player
+
+    frotz_game = _get_game(name, player, bot)
+    action = "\n"
+    response = frotz_game.do(action)
+    game_over = frotz_game.ended()
+    if not game_over and response:
+        frotz_game.save_action(action)
+    frotz_game.stop()
+    if game_over:
+        message.chat.send_text(f"{response}\n\n**GAME OVER**")
+        # leaving the group causes the game and save file to be deleted
+        message.chat.remove_contact(bot.self_contact)
+    else:
+        replies.add(text=response or "❌ Invalid command.")
 
 
 def _get_folder(bot: DeltaBot) -> str:
@@ -154,7 +190,14 @@ def _get_save_file(plugin_folder: str, name: str, player: str) -> str:
     saves_dir = f"{plugin_folder}/{name}"
     if not os.path.exists(saves_dir):
         os.makedirs(saves_dir)
-    return f"{saves_dir}/{quote(player)}.qzl"
+    return f"{saves_dir}/{quote(player)}.txt"
+
+
+def _reset_game(plugin_folder: str, name: str, player: str) -> None:
+    try:
+        os.remove(_get_save_file(plugin_folder, name, player))
+    except FileNotFoundError:
+        pass
 
 
 def _get_game(name: str, player: str, bot: DeltaBot) -> FrotzGame:
