@@ -45,7 +45,7 @@ class FrotzGame:  # noqa
         if lines and lines[0].lower().strip() == "found zcode chunk in blorb file.":
             lines.pop(0)
         self.intro = self._reformat("\n".join(lines))
-        if not self.intro:
+        if not self.intro and not self.ended():
             self.intro = self.do("look")
         if not self.intro:
             self.stop()
