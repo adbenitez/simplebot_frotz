@@ -18,6 +18,7 @@ except DistributionNotFound:
     # package is not installed
     __version__ = "0.0.0.dev0-unknown"
 games_dir = os.path.expanduser("~/.simplebot/frotz-games")
+artwork_extensions = (".jpg", ".jpeg", ".png", ".gif")
 
 
 @simplebot.hookimpl
@@ -173,14 +174,14 @@ def _get_games() -> list:
     return [
         name
         for name in sorted(os.listdir(games_dir))
-        if not name.endswith((".jpg", ".jpeg", ".png"))
+        if not name.endswith(artwork_extensions)
     ]
 
 
 def _get_artwork(name: str) -> Optional[str]:
     basename = f"{games_dir}/{name}"
-    for ext in ("jpg", "jpeg", "png"):
-        filename = f"{basename}.{ext}"
+    for ext in artwork_extensions:
+        filename = f"{basename}{ext}"
         if os.path.exists(filename):
             return filename
     return None
