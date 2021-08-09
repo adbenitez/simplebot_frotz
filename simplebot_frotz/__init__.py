@@ -105,6 +105,12 @@ def play(bot: DeltaBot, payload: str, message: Message, replies: Replies) -> Non
         return
     name = games[numb].rsplit(".", maxsplit=1)[0]
     addr = message.get_sender_contact().addr
+    try:
+        frotz_game = _get_game(name, addr, bot)
+        frotz_game.stop()
+    except ValueError:
+        replies.add(text="❌ Invalid Game.")
+        return
     with session_scope() as session:
         game = session.query(Game).filter_by(name=name, player=addr).first()
         if game is None:
@@ -114,8 +120,6 @@ def play(bot: DeltaBot, payload: str, message: Message, replies: Replies) -> Non
             text = f"❌ You are playing {name!r} already."
             replies.add(text=text, chat=bot.get_chat(game.chat_id))
             return
-    frotz_game = _get_game(name, addr, bot)
-    frotz_game.stop()
     image = _get_artwork(name)
     if image:
         chat.set_profile_image(image)
