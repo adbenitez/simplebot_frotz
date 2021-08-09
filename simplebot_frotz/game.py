@@ -46,6 +46,8 @@ class FrotzGame:  # noqa
             lines.pop(0)
         self.intro = self._reformat("\n".join(lines))
         if not self.intro:
+            self.intro = self.do("look")
+        if not self.intro:
             self.stop()
             raise ValueError(f"Invalid Game: {self.story_file!r}")
 
